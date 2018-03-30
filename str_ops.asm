@@ -29,7 +29,7 @@ _strcmp:
 
 
   .strcmp_not_equal:
-    mov byte [cmp_result], 0 ; nisu jednaki, upisujemo nula u labelu
+    mov byte [cmp_result], 0 ;nisu jednaki, upisujemo nula u labelu
     popa
     ret
 
