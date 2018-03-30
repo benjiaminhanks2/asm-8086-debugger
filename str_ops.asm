@@ -60,8 +60,61 @@ _strlen:
     popa
     ret
 
+;u SI se nalazi string koji konvertujemo u int
+;rezultat konvertovanja se nalazi u AX
+_str_to_int:
+  pusha
 
+  mov ax, 0 ;AX sluzi kao akumulator
+  mov bx, 0 ;sluzi kao brojac pozicije u stringu
+  mov cx, 0 ;sluzi kao brojac za .loop_str_to_int petlju
+  mov dx, 0 ;DX sluzi za operacije nad karakterom u stringu
+
+  call _strlen ;trazimo duzinu stinga koji konvertujemo
+  mov cl, byte [str_len] ;smestamo u CX duzinu stringa
+
+
+  .loop_str_to_int:
+  inc bx ;indikator na kom smo karakteru
+  xor dx, dx ;cistimo dx
+  mov dl, byte [si] ;smestamo prvi karakter u dx
+  sub dx, 48 ;oduzimamo ASCII nulu -> '1' - '0' = 1
+
+  ;mnozenje sa osnovom 10
+  pusha
+  mov word [tmp_var], bx ; u temp_var smestamo trenutni karakter
+  mov bl, byte[str_len] ; u bx smestamo duzinu stringa
+  sub bx, word[tmp_var] ; duzina stringa - trenutni karakter
+
+  mov ax, dx ; ax = mnozenik
+  .loop_multiply:
+  cmp bx, 0
+  je .end_of_multiply
+
+  mov cx, 10 ; cx = mnozilac
+  mul cx ; ax = ax * cx
+  dec bx
+  jmp .loop_multiply
+
+  .end_of_multiply:
+  mov word [tmp_var], ax
+  popa
+
+  ;kraj mnozenja
+
+  mov dx, word [tmp_var] ; smestamo rezultat mnozenja u dx
+
+  add ax, dx ; sabiramo na akumulator
+  inc si; prelazimo na sledeci char u stringu
+  loop .loop_str_to_int
+
+  ;pronasli smo broj, nalazi u se u ax
+  mov word [tmp_var], ax
+  popa
+  mov ax, word [tmp_var]
+  ret
 
 segment .data
 cmp_result: db 0
 str_len: db 0
+tmp_var: dw 0
