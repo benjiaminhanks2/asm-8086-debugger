@@ -66,29 +66,29 @@ _scan_arg_cmd:
   ;do ovog dela dolazi iskljucivo kad nijedna od prethodnih linija koda nije napravila skok,
   ;u smislu da nijedna komanda nije prepoznata
   .found_no_arguments:
-    popa
     mov byte[parsed_cmd_ID], 0
+    popa
     ret
   .found_start_cmd:
-    popa
     mov byte[parsed_cmd_ID], 1
+    popa
     ret
 
   .found_stop_cmd:
-    popa
     mov byte[parsed_cmd_ID], 2
+    popa
     ret
 
   .found_peek_cmd:
-    call .parse_bonus_params ;skenira bonus parametre
-    popa
     mov byte[parsed_cmd_ID], 3
-    ret
-    
-  .found_poke_cmd:
-    call .parse_bonus_params
+    call .parse_bonus_params ;parsira bonus parametre
     popa
+    ret
+
+  .found_poke_cmd:
     mov byte [parsed_cmd_ID], 4
+    call .parse_bonus_params ;parsira bonus parametre
+    popa
     ret
 
   .parse_bonus_params:
@@ -98,11 +98,18 @@ _scan_arg_cmd:
     mov cx, 0080h
     mov di, 0081h
     mov al, ' '
-    repe scasb ; preskace whitespace sve do '-' karaktera u "-p*** XXXX YYYY"
+    repe scasb ; preskace whitespace sve do '-' karaktera u "-p***_<ARGS>"
     dec di
-    repne scasb ; preskacemo do prvog space-a posle komande "-p***_XXXX YYYY" - "_" oznacava poziciju do koje zelimo da stignemo
+    repne scasb ; preskacemo do prvog space-a posle komande "-p***_<ARGS>" - "_" oznacava poziciju do koje zelimo da stignemo
 
+    cmp byte [parsed_cmd_ID], 4 ;proveravamo koja je komanda parsirana
+    ;ukoliko imamo poke komandu preskacemo i "byte" deo u "-poke byte xxxx yyyy zz"
+    jne parse_params ; ukoliko nije komanda "poke" naredne 3 linije se preskacu
+    repe scasb ;preskacemo sve whitespace-ove do "byte" dela u "-poke byte"
+    dec di
+    repne scasb ;preskacemo "byte" deo tako da se pozicioniramo ispred prvog argumenta ("-poke byte*XXXX YYYY"), "*" oznacava zeljenu poziciju
 
+    parse_params:
     mov si, bonus_cmd_param_1
     mov cx, 4 ;zelimo 4 bajta da uzmemo
 
@@ -119,6 +126,7 @@ _scan_arg_cmd:
     mov al, ' '
     mov cx, 0080h
     repe scasb ; preskace whitspace sve do prvog karaktera Y ispred "_" pozicije
+    dec di
     mov si, bonus_cmd_param_2
     mov cx, 4 ;zelimo 4 bajta da uzmemo
 
@@ -130,6 +138,29 @@ _scan_arg_cmd:
       inc di
       loop parse_through_param2
 
+    ;proveravamo da li postoji i 3. parametar u zavisnosti od parsirane komande
+    cmp byte [parsed_cmd_ID], 4
+    jne end_of_parsing ;ukoliko ne postoji zavrsavamo proceduru
+
+    ;ukoliko postoji, parsiramo treci parametar (odnosi se na komandu poke)
+    parse_third_parameter:
+      mov al, ' '
+      mov cx, 0080h
+      repe scasb ;preskace sve whitespace iza prvog argumenta ("-poke byte xxxx (*)yyy"), zavrsava se na poziciji "*", koja je pozicija prvog bajta drugog argumenta
+      dec di
+
+      mov si, bonus_cmd_param_3
+      mov cx, 2 ;ovaj put parsiramo samo 2 bajta umesto 4
+
+      parse_through_param3:
+        mov bl, byte [di]
+        mov [si], bl
+        inc si
+        inc di
+        loop parse_through_param3
+
+
+    end_of_parsing:
     popa
     ret
 
@@ -138,8 +169,9 @@ segment .data
 start_str: db "-start",0h
 stop_str: db "-stop",0h
 peek_str: db "-peek",0h
-poke_str: db "-poke",0h
+poke_str: db "-poke byte",0h
 trimmed_arg_address: db 0 ; cuvamo memorijsku adresu ociscenog stringa od space-ova
 parsed_cmd_ID: db 0 ; 0 za pogresan argument 1 za start, 2 za stop, 3 za peek, 4 poke
 bonus_cmd_param_1: times 4 db 0 ;odnosi se konkretno na komande -peek i -poke, cuva prvi prosledjeni argument posle komande
 bonus_cmd_param_2: times 4 db 0 ;cuva drugi prosledjeni argument posle komande
+bonus_cmd_param_3: times 2 db 0 ;cuva treci prosledjeni argument posle komande (samo za poke)

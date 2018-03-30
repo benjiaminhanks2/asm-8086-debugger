@@ -43,7 +43,16 @@ _print_poke_msg:
       call _print_msg
       popa
       ret
-
+_print_poke_args:
+      pusha
+      mov dx, bonus_cmd_param_1
+      call _print_msg
+      ; mov dx, bonus_cmd_param_2
+      ; call _print_msg
+      ; mov dx, bonus_cmd_param_3
+      ; call _print_msg
+      popa
+      ret
 segment .data
 start_msg: db "Program je startovan.",'$'
 stop_msg: db "Program je zaustavljen.",'$'

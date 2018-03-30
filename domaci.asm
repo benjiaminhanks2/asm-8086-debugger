@@ -16,6 +16,7 @@ org 100h
 
   cmp byte [parsed_cmd_ID], 4 ;poke komanda
   je _print_poke_msg
+
   ret
 
 %include "str_ops.asm"
