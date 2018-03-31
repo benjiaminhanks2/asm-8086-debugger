@@ -1,30 +1,29 @@
 
 _parse_file_data:
-  ;otvaranje fajla
-  mov ah, 3dh ;operacija OPEN
-  mov al, 0 ; 0 = read, 1 = write, 2 = read + write
-  mov dx, file_name ; ime fajla ide u DX
-  int 21h ;ako je uspesno, AX je file handle
+  pusha
 
-  ;citanje iz fajla
-  mov bx, ax ;file handle mora da bude u BX
-  mov ah, 3fh ;operacija READ
+  ; otvara fajl
+  mov ax, 3d00h ; 3dh u AH za OPEN komandu
+  mov dx, input_file_name ; ime fajla iz kog citamo
+  int 21h
 
-  mov cx, 10 ;max velicina fajla je 256 bajtova
-  mov dx, parsed_string
-  int 21h  ;velicina parsed_string se nalazi u AX
+  ;cita fajl
+  mov bx, ax ; premestamo file handle u BX
+  mov ah, 3fh ; 3fh je vrednost za READ
+  mov cx, 256 ; broj bajtova koji citamo
+  mov dx, buf ; mesto na koje upisujemo
+  int 21h
 
-  push ax ;na steku se nalazi velicina parsed_string
+  ;close the file
+  mov ah, 3eh ; 3eh je vrednost za CLOSE
+  int 21h
+  popa
 
-  ;close file
-  mov ah, 3eh ; operacija CLOSE
-  int 21h ;BX je vec postavljen kao file handler
-
+  ret
 
 
 
 segment .data
-  file_name: db "poz.txt"
-  parsed_string: db 10, 0h ; - ucitani podaci oblika "XX\n\rYY\n\r" i terminator stringa na kraju
-  posx: db 0
-  posy: db 0
+
+input_file_name:  db 'poz.txt', 0
+buf: 	resb 256
