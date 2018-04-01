@@ -1,4 +1,4 @@
-;fajl koji sadrzi metode za ispis na ekran
+;fajl koji sadrzi metode za ispis pomocnih poruka na ekran
 
 ;ispisuje string terminisan '$' na ekran
 ;adresa poruke koja se ispisuje mora se nalaziti u DX pre poziva ove funkcije

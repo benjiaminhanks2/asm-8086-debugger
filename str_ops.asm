@@ -43,6 +43,7 @@ _strcmp:
 
 
 ;podrazumeva da se adresa prvog karaktera u stringu nalazi u SI
+; rezultat smesta str_len
 _strlen:
   pusha ; cuva se sadrzaj registara
   mov cx, 0 ; postavlja CX na 0. CX sluzi za pracenje duzine stringa

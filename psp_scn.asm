@@ -1,4 +1,7 @@
-;ovaj fajl sadrzi metode pomocu kojih se skenira sadrzaj argumenata komandne linije
+;ovaj fajl sadrzi metode pomocu kojih se parsira sadrzaj argumenata komandne linije
+
+
+; parsira argumente komandne linije i smesta rezultat u parsed_cmd_ID i odgovarajuce labele koje sluze da drze vrednosti argumenata
 _scan_arg_cmd:
   pusha
 
