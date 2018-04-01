@@ -8,9 +8,13 @@ ROW_MULTIPLIER equ 160
 _draw_frame:
   pusha
   call _calculate_starting_pos ; racunamo pocetnu lokaciju ispisa, rezultat se nalazi u starting_pos
-  call _draw_time
+  call _draw_time ; ispisuje vreme na ekran
+  call _draw_stack_labels
   popa
   ret
+
+
+; ispisuje sistemsko vreme na ekran
 _draw_time:
   pusha
   call _time_to_string ; pretvaramo vreme u string, rezultat se nalazi u timestamp
@@ -20,6 +24,104 @@ _draw_time:
   mov bx, word [starting_pos] ; postavljamo BX da sadrzi pocetnu poziciju ispisa
   mov si, timestamp ; u DI ide ime stringa koji zelimo da ispisemo na ekranu
 
+  call _draw_string ; funkcija koja prikazuje sadrzaj stringa na ekran
+
+  popa
+  ret
+
+;ispisuje labele registara na ekran ("AX:", "BX", "CX", "DX", etc.)
+_draw_register_labels:
+  pusha
+  mov ax, VID_MEM
+  mov es, ax
+  mov bx, word [starting_pos]
+
+  ;ispis stringa "Registers"
+  mov si, registers_lbl
+  add bx, 160 ; da bismo ispisali u redu ispod timestamp-a
+  call _draw_string ; ispisujemo "REGISTERS"
+
+  ;ispis stringa "ax:"
+  mov si, ax_lbl
+  add bx, 160
+  call _draw_string ; ispisujemo "ax:"
+
+  ;ispis stringa "bx:"
+  mov si, bx_lbl
+  add bx, 160
+  call _draw_string ; ispisujemo "bx:"
+
+  ;ispis stringa "cx:"
+  mov si, cx_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis stringa "dx:"
+  mov si, dx_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis stringa "si:"
+  mov si, si_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis stringa "di:"
+  mov si, di_lbl
+  add bx, 160
+  call _draw_string
+
+  popa
+  ret
+
+_draw_stack_labels:
+  pusha
+  mov ax, VID_MEM
+  mov es, ax
+  mov bx, word [starting_pos]
+
+  ;ispis stringa "Stack: "
+  mov si, stack_lbl
+  add bx, 160 ; za ispis ispod timestamp-a
+  call _draw_string
+
+  ;ispis "1:"
+  mov si, first_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis "2:"
+  mov si, second_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis "3:"
+  mov si, third_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis "4:"
+  mov si, fourth_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis "5:"
+  mov si, fifth_lbl
+  add bx, 160
+  call _draw_string
+
+  ;ispis "6:"
+  mov si, sixth_lbl
+  add bx, 160
+  call _draw_string
+
+
+  popa
+  ret
+; u SI se nalazi adresa ulaznog stringa
+; u BX se nalazi pozicija ispisa na ekranu
+_draw_string:
+  pusha
 
   ;pisemo vreme
   call _strlen ; trazimo duzinu stringa
@@ -37,6 +139,7 @@ _draw_time:
 
   popa
   ret
+
 ; izracunava pocetnu poziciju ispisa
 ; rezultat smesta u starting_pos
 _calculate_starting_pos:
@@ -123,6 +226,7 @@ _time_to_string:
   ret
 
 ; u dl se nalazi broj koji ispisujemo (0-99)
+;funkcija koja pretvara broj koji ima najvise dve cifre u ASCII
 itoa:
   xor ax, ax ; resetujemo AX
   mov al, dl ; smestamo u AL posto cemo njega da koristimo
@@ -137,40 +241,6 @@ itoa:
 
   ret
 
-; OBSOLETE
-_draw_frame_obsolete_code:
-    pusha
-
-    call _calculate_starting_pos ; metoda za izracunavanje pocetne pozicije
-
-    mov ax, VID_MEM
-    mov bx, word [starting_pos]
-    mov es, ax ; pocetak video memorije
-    ; mov byte[es:bx], byte 1
-    ; inc bx
-    ; mov byte[es:bx], 02h
-    mov cx, 20; sirina ispisa (10 karaktera bojimo u tamno plavo)
-    mov ax, 5; visina
-
-    .drawing_loop:
-      cmp ax, 0 ; ako nema vise redova za ispisivanje dosli smo do kraja
-      je .end_of_drawing
-      mov cx, 20 ; sirina ispisa (broj puta koliko ce se .draw petlja izvrsiti po redu)
-      add bx, 160 ; prelazimo u novi red
-      sub bx, 40
-      .draw:
-      mov byte[es:bx], byte 2
-      inc bx
-      mov byte[es:bx], 02h
-      inc bx
-      loop .draw
-      dec ax
-      jmp .drawing_loop
-    .end_of_drawing:
-    popa
-    ret
-
-
 
 segment .data
 starting_pos: dw 0 ; pocetna pozicija ispisa sadrzaja debuggera
@@ -179,3 +249,55 @@ placeholder1: db 0 ; ova labela drzi timestamp string
 hour: db 0
 minute: db 0
 second: db 0
+
+; labele vezane za ispis registara opste namene na ekranu
+
+; labele vezane za ispis imena registara na ekran
+registers_lbl: db "Registers", 0
+ax_lbl: db "ax:", 0
+bx_lbl: db "bx:", 0
+cx_lbl: db "cx:", 0
+dx_lbl: db "dx:", 0
+si_lbl: db "si:", 0
+di_lbl: db "di:", 0
+
+
+; labele za cuvanje vrednosti registara
+ax_val: db "    ", 0 ; string sa 4 pozicije ( u te 4 pozicije se smesta vrednost registra)
+bx_val: db "    ", 0
+cx_val: db "    ", 0
+dx_val: db "    ", 0
+si_val: db "    ", 0
+di_val: db "    ", 0
+
+;---------------------------------
+
+
+;labele vezane za ispis steka na ekranu
+stack_lbl: db "Stack:", 0
+first_lbl: db "1:", 0
+second_lbl: db "2:", 0
+third_lbl: db "3:", 0
+fourth_lbl: db "4:", 0
+fifth_lbl: db "5:", 0
+sixth_lbl: db "6:", 0
+
+; labele za cuvanje vrednosti steka
+first_val: db "    ", 0
+second_val: db "    ", 0
+third_val: db "    ", 0
+fourth_val: db "    ", 0
+fifth_val: db "    ", 0
+sixth_val: db "    ", 0
+
+
+;--------------------------------
+
+;labele za ispis memorijske lokacije na ekranu
+seg_lbl: db "seg", 0
+off_lbl: db "off", 0
+value_lbl: db "val", 0
+
+seg_val: db "    ", 0
+off_val: db "    ", 0
+value_val: db "    ", 0
