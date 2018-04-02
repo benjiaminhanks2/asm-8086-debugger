@@ -4,13 +4,132 @@ DARK_BLUE equ 00010000b
 COL_MULTIPLIER equ 2
 ROW_MULTIPLIER equ 160
 
-;crta informacije na ekranu
-_draw_frame:
-  pusha
-  call _calculate_starting_pos ; racunamo pocetnu lokaciju ispisa, rezultat se nalazi u starting_pos
-  call _draw_time ; ispisuje vreme na ekran
-  call _draw_stack_labels
-  popa
+;ovu metodu zove int 60h - ona racuna vrednosti registara i smesta ih na u odgovarajuce labele
+_int_60h_handler:
+    call _time_to_string ; parsiramo vreme za timestamp
+
+    cmp ah, 0 ; ako je 0 vrsimo prikaz vrednosti registara opste namene
+    je go_handle_base_regs ; parsira base registre
+    cmp ah, 1
+    je go_handle_stack_regs  ; parsira vrednosti stack adresa
+    ;call ; ovde idu stack vrednosti
+    go_handle_base_regs:
+      call _base_registers_handler
+      jmp finish_parsing
+
+    go_handle_stack_regs:
+      call _stack_values_handler
+
+    finish_parsing:
+    ret
+
+;smesta vrednosti registara opste namene u labele
+_base_registers_handler:
+  ;cuvamo AX i SI jer cemo da ga koristimo za upis u labelu
+  push ax
+  push si
+
+  mov si, ax_val ;parsiramo vrednost za AX
+  call _reg_hex ; _reg_hex dobija argumente preko SI i AX registra, u AX se nalazi hex vrednost koju parsiramo a u SI se nalazi adresa stringa na koji upisujemo
+
+  mov ax, bx ; parsiramo vrednost za BX
+  mov si, bx_val
+  call _reg_hex
+
+  mov ax, cx ; parsiramo vrednost za CX
+  mov si, cx_val
+  call _reg_hex
+
+  mov ax, dx ; parsiramo vrednost za DX
+  mov si, dx_val
+  call _reg_hex
+
+  pop si ; vracamo originalnu vrednost SI kako bismo je ispisali
+  mov ax, si ; parsiramo vrednost za SI
+  mov si, si_val
+
+  mov ax, di ; parsiramo vrednost za DI
+  mov di, di_val
+
+  pop ax ; skidamo ax sa stack-a da bismo odrzali staru vrednost
+
+
+  ret
+
+
+;smesta vrednosti sa stack-a u labele
+_stack_values_handler:
+  ; cuvamo registre jer ih koristimo
+  mov word [temp_reg_val_holder1], ax
+  mov word [temp_reg_val_holder2], si
+  mov word [temp_reg_val_holder3], es
+  mov word [temp_reg_val_holder4], bx
+
+  ;postavljamo da pokazuje na SS:SP
+  mov ax, ss
+  mov es, ax
+  mov bx, sp
+
+  mov ax, word [es:bx] ; parsiramo prvu vrednost sa steka
+  mov si, first_val
+  call _reg_hex
+
+  inc bx ; prelazimo na sledecu vrednost na stack-u
+  inc bx
+
+  ;pop dx test
+
+  mov ax, word [es:bx] ; parsiramo drugu vrednost sa steka
+  mov si, second_val
+  call _reg_hex
+
+  inc bx ; prelazimo na sledecu vrednost na stack-u
+  inc bx
+
+  ;pop dx
+
+
+  mov ax, word [es:bx] ; parsiramo trecu vrednost sa steka
+  mov si, third_val
+  call _reg_hex
+
+  inc bx ; prelazimo na sledecu vrednost na stack-u
+  inc bx
+
+  ;pop dx
+
+
+  mov ax, word [es:bx] ; parsiramo cetvrtu vrednost sa steka
+  mov si, fourth_val
+  call _reg_hex
+
+  inc bx ; prelazimo na sledecu vrednost na stack-u
+  inc bx
+
+  ;pop dx
+
+
+  mov ax, word [es:bx] ; parsiramo petu vrednost sa steka
+  mov si, fifth_val
+  call _reg_hex
+
+  inc bx ; prelazimo na sledecu vrednost na stack-u
+  inc bx
+
+  ;pop dx
+
+
+  mov ax, word [es:bx] ; parsiramo sestu vrednost sa steka
+  mov si, sixth_val
+  call _reg_hex
+
+
+  ;vracamo registre na staro
+  mov ax, word [temp_reg_val_holder1]
+  mov si, word [temp_reg_val_holder2]
+  mov es, word [temp_reg_val_holder3]
+  mov bx, word [temp_reg_val_holder4]
+
   ret
 
 
@@ -241,6 +360,28 @@ itoa:
 
   ret
 
+; smesta podatke iz registra u string labelu u hex prezentaciji
+; AX = value to print
+; SI - string u koji upisujemo
+_reg_hex:
+  pusha
+  mov cx,4        ; stampa 4 hex cifre (= 16 bits)
+  mov bx, 0       ; brojac za trenutnu poziciju u stringu
+  .print_digit:
+      rol ax,4   ; premesta trenutno najlevlju cifru u 4 najmanje znacajna bita
+      mov dl,al
+      and dl,0xF  ; izolujemo hex cifru koju hocemo da odstampamo
+      add dl,'0'  ; konvertujemo u karakter
+      cmp dl,'9'  ; ...
+      jbe .ok     ; ...
+      add dl,7    ; ... (za 'A'..'F')
+      .ok:            ; ...
+        mov byte[si+bx], dl ; u dl se nalazi ASCII char
+        inc bx
+        loop .print_digit
+
+  popa
+  ret
 
 segment .data
 starting_pos: dw 0 ; pocetna pozicija ispisa sadrzaja debuggera
@@ -301,3 +442,12 @@ value_lbl: db "val", 0
 seg_val: db "    ", 0
 off_val: db "    ", 0
 value_val: db "    ", 0
+
+;vrednost koja se nalazi u AH kad se pozove int 60h
+int_val: db 0
+
+
+temp_reg_val_holder1: dw 0 ; sluzi za cuvanje vrednosti registara
+temp_reg_val_holder2: dw 0
+temp_reg_val_holder3: dw 0
+temp_reg_val_holder4: dw 0

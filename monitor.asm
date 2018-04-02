@@ -17,6 +17,13 @@ _print_start_msg:
       popa ; vraca vrednosti sacuvanih registara
       ret
 
+_print_ax_msg:
+      pusha ; cuva registre
+      mov dx, ax_val ;smesta pocetnu adresu poruke u DX
+      call _print_msg ; poziva ispis poruke na ekran
+      popa ; vraca vrednosti sacuvanih registara
+      ret
+
 _print_stop_msg:
       pusha ; cuva registre
       mov dx, stop_msg ;smesta pocetnu adresu poruke u DX
