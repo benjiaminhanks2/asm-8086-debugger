@@ -20,6 +20,7 @@ _int_60h_handler:
     go_handle_stack_regs:
       call _stack_values_handler
 
+
     finish_parsing:
     ret
 
@@ -46,11 +47,15 @@ _base_registers_handler:
 
   pop si ; vracamo originalnu vrednost SI kako bismo je ispisali
   mov ax, si ; parsiramo vrednost za SI
+  push si ; opet menjamo SI pa ga cuvamo na stack
   mov si, si_val
+  call _reg_hex
 
   mov ax, di ; parsiramo vrednost za DI
-  mov di, di_val
+  mov si, di_val
+  call _reg_hex
 
+  pop si ; skidamo SI jer smo njega stavili na stack
   pop ax ; skidamo ax sa stack-a da bismo odrzali staru vrednost
 
 
@@ -148,8 +153,8 @@ _draw_time:
   popa
   ret
 
-;ispisuje labele registara na ekran ("AX:", "BX", "CX", "DX", etc.)
-_draw_register_labels:
+;ispisuje debug registara na ekran ("AX:", "BX", "CX", "DX", etc.)
+_draw_register_frame:
   pusha
   mov ax, VID_MEM
   mov es, ax
@@ -165,35 +170,67 @@ _draw_register_labels:
   add bx, 160
   call _draw_string ; ispisujemo "ax:"
 
+  ;ispisuje vrednost AX-a
+  mov si, ax_val
+  add bx, 8 ; razmak izmedju "AX:" i vrednosti
+  call _draw_string
+
   ;ispis stringa "bx:"
   mov si, bx_lbl
-  add bx, 160
+  add bx, 152
   call _draw_string ; ispisujemo "bx:"
+
+  ;ispis vrednosti BX registra
+  mov si, bx_val
+  add bx, 8
+  call _draw_string
 
   ;ispis stringa "cx:"
   mov si, cx_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti CX registra
+  mov si, cx_val
+  add bx, 8
   call _draw_string
 
   ;ispis stringa "dx:"
   mov si, dx_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti DX registra
+  mov si, dx_val
+  add bx, 8
   call _draw_string
 
   ;ispis stringa "si:"
   mov si, si_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti SI registra
+  mov si, si_val
+  add bx, 8
   call _draw_string
 
   ;ispis stringa "di:"
   mov si, di_lbl
-  add bx, 160
+  add bx, 152
   call _draw_string
+
+  ;ispis vrednosti DI registra
+  mov si, di_val
+  add bx, 8
+  call _draw_string
+
 
   popa
   ret
 
-_draw_stack_labels:
+;ispisuje debug stack-a
+_draw_stack_frame:
   pusha
   mov ax, VID_MEM
   mov es, ax
@@ -209,31 +246,60 @@ _draw_stack_labels:
   add bx, 160
   call _draw_string
 
+  ;ispis vrednosti na SP
+  mov si, first_val
+  add bx, 8
+  call _draw_string
+
   ;ispis "2:"
   mov si, second_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti na SP+2
+  mov si, second_val
+  add bx, 8
   call _draw_string
 
   ;ispis "3:"
   mov si, third_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti na SP+4
+  mov si, third_val
+  add bx, 8
   call _draw_string
 
   ;ispis "4:"
   mov si, fourth_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis vrednosti na SP+6
+  mov si, fourth_val
+  add bx, 8
   call _draw_string
 
   ;ispis "5:"
   mov si, fifth_lbl
-  add bx, 160
+  add bx, 152
+  call _draw_string
+
+  ;ispis na vrednosti SP+8
+  mov si, fifth_val
+  add bx, 8
   call _draw_string
 
   ;ispis "6:"
   mov si, sixth_lbl
-  add bx, 160
+  add bx, 152
   call _draw_string
 
+  ;ispis na vrednosti SP+8
+  mov si, sixth_val
+  add bx, 8
+  call _draw_string
 
   popa
   ret
@@ -404,12 +470,12 @@ di_lbl: db "di:", 0
 
 
 ; labele za cuvanje vrednosti registara
-ax_val: db "    ", 0 ; string sa 4 pozicije ( u te 4 pozicije se smesta vrednost registra)
-bx_val: db "    ", 0
-cx_val: db "    ", 0
-dx_val: db "    ", 0
-si_val: db "    ", 0
-di_val: db "    ", 0
+ax_val: db "    h", 0 ; string sa 4 pozicije ( u te 4 pozicije se smesta vrednost registra)
+bx_val: db "    h", 0
+cx_val: db "    h", 0
+dx_val: db "    h", 0
+si_val: db "    h", 0
+di_val: db "    h", 0
 
 ;---------------------------------
 
@@ -424,12 +490,12 @@ fifth_lbl: db "5:", 0
 sixth_lbl: db "6:", 0
 
 ; labele za cuvanje vrednosti steka
-first_val: db "    ", 0
-second_val: db "    ", 0
-third_val: db "    ", 0
-fourth_val: db "    ", 0
-fifth_val: db "    ", 0
-sixth_val: db "    ", 0
+first_val: db "    h", 0
+second_val: db "    h", 0
+third_val: db "    h", 0
+fourth_val: db "    h", 0
+fifth_val: db "    h", 0
+sixth_val: db "    h", 0
 
 
 ;--------------------------------
@@ -439,8 +505,8 @@ seg_lbl: db "seg", 0
 off_lbl: db "off", 0
 value_lbl: db "val", 0
 
-seg_val: db "    ", 0
-off_val: db "    ", 0
+seg_val: db "    h", 0
+off_val: db "    h", 0
 value_val: db "    ", 0
 
 ;vrednost koja se nalazi u AH kad se pozove int 60h
