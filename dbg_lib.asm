@@ -24,6 +24,31 @@ _int_60h_handler:
     finish_parsing:
     ret
 
+
+; obradjuje parsiranje i ispis na ekranu
+_peek:
+    pusha
+
+    ;parsiranje
+
+    mov si, seg_val
+    call _str_to_hex ; rezultat smesta u AX
+
+    mov es, ax ; smestamo u es taj segment
+
+    mov si, off_val
+    call _str_to_hex
+
+    mov bx, ax ; smestamo u BX
+
+    mov al, byte [es:bx] ; u AX smestamo bajt koji se nalazi na toj memorijskoj adresi
+
+    ;ispisivanje
+    call _draw_mem_frame
+
+    popa
+    ret
+
 ;smesta vrednosti registara opste namene u labele
 _base_registers_handler:
   ;cuvamo AX i SI jer cemo da ga koristimo za upis u labelu
@@ -303,6 +328,45 @@ _draw_stack_frame:
 
   popa
   ret
+
+; crta seg - off - val i njihove vrednosti
+_draw_mem_frame:
+  pusha
+
+  mov ax, VID_MEM
+  mov es, ax
+  mov bx, word [starting_pos]
+
+  add bx, 1280 ; da bi se ispisivalo ispod registara opste namene/stack-a
+
+  mov si, seg_lbl
+  call _draw_string
+
+  mov si, seg_val
+  add bx, 8
+  call _draw_string
+
+  mov si, off_lbl
+  add bx, 152
+  call _draw_string
+
+  mov si, off_val
+  add bx, 8
+  call _draw_string
+
+  mov si, value_lbl
+  add bx, 152
+  call _draw_string
+
+  mov si, value_val
+  add bx, 8
+  call _draw_string
+
+  popa
+  ret
+
+
+
 ; u SI se nalazi adresa ulaznog stringa
 ; u BX se nalazi pozicija ispisa na ekranu
 _draw_string:
@@ -507,7 +571,7 @@ value_lbl: db "val", 0
 
 seg_val: db "    h", 0
 off_val: db "    h", 0
-value_val: db "    ", 0
+value_val: db "    h", 0
 
 ;vrednost koja se nalazi u AH kad se pozove int 60h
 int_val: db 0

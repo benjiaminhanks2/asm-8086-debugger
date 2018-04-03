@@ -39,7 +39,7 @@ _print_peek_msg:
       ret
 _print_missing_args_msg:
       pusha
-      mov dx, peek_missing_str
+      mov dx, missing_args_msg
       call _print_msg
       popa
       ret
@@ -65,4 +65,4 @@ start_msg: db "Program je startovan.",'$'
 stop_msg: db "Program je zaustavljen.",'$'
 peek_msg: db "Peek komanda pozvana!","$"
 poke_msg: db "Poke komanda pozvana!",'$'
-peek_missing_str: db "Los unos argumenata pri pozivu komande!",'$'
+missing_args_msg: db "Los unos argumenata pri pozivu komande!",'$'

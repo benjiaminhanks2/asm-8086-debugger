@@ -1,57 +1,47 @@
 org 100h
 
-  ;call _scan_arg_cmd
-;  call _parse_file_data
-  ;lcall _draw_frame
-  ; call _scan_arg_cmd ; parsira argumente komandne linije
-  ; cmp byte[parsed_cmd_ID], 1 ; ukoliko je uneta komanda start
-  ; je start_handler
-  ; call _parse_file_data
-  ; call _debugger
-  ; ret
-  ;test_case
-  mov ax, 1234h
-  mov bx, 5667h
-  mov cx, 890h
-  mov dx, 0AAAAh
+call _scan_arg_cmd ; parsira argumente komandne linije
 
-  call _parse_file_data
-  call _calculate_starting_pos
+cmp byte [parsed_cmd_ID], 0 ; invalidni argumenti
+je invalid_arg_handler
 
-  mov ax, 1234h
-  push ax
-  mov ax, 5678h
-  push ax
-  mov ax, 0089h
-  push ax
-  mov ax, 0AAAAh
-  push ax
-  mov ax, 0BBBBh
-  push ax
-  mov ax, 0CCCCh
-  push ax
+cmp byte [parsed_cmd_ID], 1 ; -start
+je start_handler
 
+cmp byte [parsed_cmd_ID], 2 ; -stop
+je stop_handler
 
-  mov ah, 1
-  call _int_60h_handler
-  call _draw_stack_frame
+cmp byte [parsed_cmd_ID], 3 ; -peek
+je peek_handler
 
+cmp byte [parsed_cmd_ID], 4 ; -poke
+je poke_handler
 
-  pop ax
-  pop ax
-  pop ax
-  pop ax
-  pop ax
-  pop ax
+ret
 
+invalid_arg_handler:
+  call _print_missing_args_msg
   ret
+
 start_handler:
-  call _parse_file_data ; ucitava podatke iz fajla
+  call _parse_file_data ; parsira sadrzaj "poz.txt" fajla
+  call _print_start_msg
+  ret
+
+stop_handler:
+  call _print_stop_msg
+  ret
+
+peek_handler:
+  call _print_peek_msg
+  ret
+
+poke_handler:
+  call _print_poke_msg
   ret
 
 segment .data
-
-
+test_test: db "FF11", 0
 
 %include "str_ops.asm"
 %include "psp_scn.asm"
