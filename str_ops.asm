@@ -66,10 +66,10 @@ _strlen:
 _str_to_int:
   pusha
 
-  mov ax, 0 ;AX sluzi kao akumulator
-  mov bx, 0 ;sluzi kao brojac pozicije u stringu
-  mov cx, 0 ;sluzi kao brojac za .loop_str_to_int petlju
-  mov dx, 0 ;DX sluzi za operacije nad karakterom u stringu
+  xor ax, ax ;AX sluzi kao akumulator
+  xor bx, bx ;sluzi kao brojac pozicije u stringu
+  xor cx, cx ;sluzi kao brojac za .loop_str_to_int petlju
+  xor dx, dx ;DX sluzi za operacije nad karakterom u stringu
 
   call _strlen ;trazimo duzinu stinga koji konvertujemo
   mov cl, byte [str_len] ;smestamo u CX duzinu stringa
@@ -83,7 +83,7 @@ _str_to_int:
 
   ;mnozenje sa osnovom 10
   pusha
-  mov word [tmp_var], bx ; u temp_var smestamo trenutni karakter
+  mov word [tmp_var], bx ; u temp_var smestamo poziciju  karaktera u stringu
   mov bl, byte[str_len] ; u bx smestamo duzinu stringa
   sub bx, word[tmp_var] ; duzina stringa - trenutni karakter
 
@@ -108,6 +108,73 @@ _str_to_int:
   add ax, dx ; sabiramo na akumulator
   inc si; prelazimo na sledeci char u stringu
   loop .loop_str_to_int
+
+  ;pronasli smo broj, nalazi u se u ax
+  mov word [tmp_var], ax
+  popa
+  mov ax, word [tmp_var]
+  ret
+
+
+; u SI se nalazi string koji konvertujemo u hex
+; rezultat konvertovanja se nalazi u AX
+_str_to_hex:
+  pusha
+
+  xor ax, ax ;AX sluzi kao akumulator
+  xor bx, bx ;sluzi kao brojac pozicije u stringu
+  xor cx, cx ;sluzi kao brojac za .loop_str_to_int petlju
+  xor dx, dx ;DX sluzi za operacije nad karakterom u stringu
+
+  call _strlen ;trazimo duzinu stinga koji konvertujemo
+  mov cl, byte [str_len] ;smestamo u CX duzinu stringa
+
+
+  loop_str_to_hex:
+  inc bx ;indikator na kom smo karakteru
+  xor dx, dx ;cistimo dx
+  mov dl, byte [si] ;smestamo prvi karakter u dx
+
+  cmp dl, 'A' ; poredimo sa 'a'
+  jl char_is_a_num
+  jmp char_is_a_letter
+
+  char_is_a_num:
+  sub dx, 48 ;oduzimamo ASCII nulu -> '1' - '0' = 1
+  jmp convert_to_hex
+
+  char_is_a_letter:
+  sub dx, 48
+  sub dx, 7 ; npr: 'F' je 70 ASCII -> 70 - 48 = 22 - 7 = 15
+
+  convert_to_hex:
+  ;mnozenje sa osnovom 16
+  pusha
+  mov word [tmp_var], bx ; u temp_var smestamo poziciju  karaktera u stringu
+  mov bl, byte[str_len] ; u bx smestamo duzinu stringa
+  sub bx, word[tmp_var] ; duzina stringa - trenutni karakter
+
+  mov ax, dx ; ax = mnozenik
+  .loop_multiply_hex:
+  cmp bx, 0
+  je .end_of_multiply_hex
+
+  mov cx, 16 ; cx = mnozilac
+  mul cx ; ax = ax * cx
+  dec bx
+  jmp .loop_multiply_hex
+
+  .end_of_multiply_hex:
+  mov word [tmp_var], ax
+  popa
+
+;kraj mnozenja
+
+  mov dx, word [tmp_var] ; smestamo rezultat mnozenja u dx
+
+  add ax, dx ; sabiramo na akumulator
+  inc si; prelazimo na sledeci char u stringu
+  loop loop_str_to_hex
 
   ;pronasli smo broj, nalazi u se u ax
   mov word [tmp_var], ax
