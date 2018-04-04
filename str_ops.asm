@@ -182,6 +182,28 @@ _str_to_hex:
   mov ax, word [tmp_var]
   ret
 
+; string iz kojeg kopiramo nalazi se u SI
+; string u koji kopiramo nalazi se u DI
+_strcpy:
+  pusha
+  xor ax, ax
+  xor cx, cx
+
+  call _strlen ; da znamo koliko kopiramo
+  mov cl, byte [str_len]
+
+  loop_cpy:
+  cmp cl, 0
+  je done_copying
+  mov al, byte [si]
+  mov byte [di], al
+  inc si
+  inc di
+  loop loop_cpy
+
+  done_copying:
+  popa
+  ret
 segment .data
 cmp_result: db 0
 str_len: db 0

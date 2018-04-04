@@ -31,6 +31,18 @@ _peek:
 
     ;parsiranje
 
+    ;kopira sadrzaj iz prvog parametra sa PSP-a u seg_val string
+    mov si, bonus_cmd_param_1
+    mov di, seg_val
+    call _strcpy
+
+    ; kopira sadrzaj iz drugog parametra sa PSP-a u off_val string
+    mov si, bonus_cmd_param_2
+    mov di, off_val
+    call _strcpy
+
+    ; zasto kopiram? zato sto moze da se startuje peek pa poke, poke ce da promeni seg_val i off_val ako ostavim na bonus_cmd_param_1 i bonus_cmd_param_2
+
     mov si, seg_val
     call _str_to_hex ; rezultat smesta u AX
 
@@ -41,13 +53,42 @@ _peek:
 
     mov bx, ax ; smestamo u BX
 
-    mov al, byte [es:bx] ; u AX smestamo bajt koji se nalazi na toj memorijskoj adresi
+    xor ax, ax
+    mov al, byte [es:bx] ; u DL smestamo bajt koji se nalazi na toj memorijskoj adresi
+    mov si, value_val
+    call _reg_hex ; upisujemo rezultat peek-a
 
     ;ispisivanje
     call _draw_mem_frame
 
     popa
     ret
+
+
+
+; funkcionalnost za komandu poke
+_poke:
+  pusha
+
+  mov si, bonus_cmd_param_1 ; XXXX vrednost od poke komande
+  call _str_to_hex  ; pretvaramo iz stringa u hex, rezultat se nalazi u AX
+
+  mov es, ax
+
+  mov si, bonus_cmd_param_2 ; YYYY vrednost od poke komande
+  call _str_to_hex
+
+  mov bx, ax
+
+  mov si, bonus_cmd_param_3 ; ZZ vrednost od poke komande
+  call _str_to_hex
+
+  mov byte [es:bx], byte al ; upisujemo na adresu XXXX:YYYY vrednost ZZ
+
+
+  popa
+  ret
+
 
 ;smesta vrednosti registara opste namene u labele
 _base_registers_handler:
@@ -333,6 +374,7 @@ _draw_stack_frame:
 _draw_mem_frame:
   pusha
 
+
   mov ax, VID_MEM
   mov es, ax
   mov bx, word [starting_pos]
@@ -342,24 +384,37 @@ _draw_mem_frame:
   mov si, seg_lbl
   call _draw_string
 
-  mov si, seg_val
+  mov si, seg_val ; XXXX vrednost -peek komande
+  add bx, 8
+  call _draw_string
+
+  mov si, h_lbl ; crta slovo "h"
   add bx, 8
   call _draw_string
 
   mov si, off_lbl
-  add bx, 152
+  add bx, 144
   call _draw_string
 
-  mov si, off_val
+  mov si, off_val ; YYYY vrednost -peek komande
+  add bx, 8
+  call _draw_string
+
+  mov si, h_lbl
   add bx, 8
   call _draw_string
 
   mov si, value_lbl
-  add bx, 152
+  add bx, 144
   call _draw_string
 
-  mov si, value_val
+  mov si, value_val 
+  add si, 2
   add bx, 8
+  call _draw_string
+
+  mov si, h_lbl
+  add bx, 4
   call _draw_string
 
   popa
@@ -569,9 +624,9 @@ seg_lbl: db "seg", 0
 off_lbl: db "off", 0
 value_lbl: db "val", 0
 
-seg_val: db "    h", 0
-off_val: db "    h", 0
-value_val: db "    h", 0
+seg_val: times 5 db 0
+off_val: times 5 db 0
+value_val: times 5 db 0
 
 ;vrednost koja se nalazi u AH kad se pozove int 60h
 int_val: db 0
@@ -581,3 +636,4 @@ temp_reg_val_holder1: dw 0 ; sluzi za cuvanje vrednosti registara
 temp_reg_val_holder2: dw 0
 temp_reg_val_holder3: dw 0
 temp_reg_val_holder4: dw 0
+h_lbl: db "h",0

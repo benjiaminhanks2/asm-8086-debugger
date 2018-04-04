@@ -175,6 +175,6 @@ peek_str: db "-peek",0h
 poke_str: db "-poke byte",0h
 trimmed_arg_address: db 0 ; cuvamo memorijsku adresu ociscenog stringa od space-ova
 parsed_cmd_ID: db 0 ; 0 za pogresan argument 1 za start, 2 za stop, 3 za peek, 4 poke
-bonus_cmd_param_1: times 4 db 0 ;odnosi se konkretno na komande -peek i -poke, cuva prvi prosledjeni argument posle komande
-bonus_cmd_param_2: times 4 db 0 ;cuva drugi prosledjeni argument posle komande
-bonus_cmd_param_3: times 2 db 0 ;cuva treci prosledjeni argument posle komande (samo za poke)
+bonus_cmd_param_1: times 5 db 0 ;odnosi se konkretno na komande -peek i -poke, cuva prvi prosledjeni argument posle komande
+bonus_cmd_param_2: times 5 db 0;cuva drugi prosledjeni argument posle komande
+bonus_cmd_param_3: times 5 db 0 ;cuva treci prosledjeni argument posle komande (samo za poke)

@@ -33,10 +33,14 @@ stop_handler:
   ret
 
 peek_handler:
+  call _parse_file_data
+  call _calculate_starting_pos
+  call  _peek
   call _print_peek_msg
   ret
 
 poke_handler:
+  call _poke
   call _print_poke_msg
   ret
 
